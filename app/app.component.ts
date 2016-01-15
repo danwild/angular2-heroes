@@ -1,5 +1,11 @@
 // this is a SystemJS call
 import {Component} from 'angular2/core';
+import {OnInit} from 'angular2/core';
+import {ICacheObject} from "angular2/src/upgrade/angular_js";
+
+import {Hero} from './hero';
+import {HeroDetailComponent} from './hero-detail.component';
+import {HeroService} from './hero.service';
 
 // Nothing in our class yet, but we have defined the 'my-app' selector to inject template
 @Component({
@@ -52,53 +58,50 @@ import {Component} from 'angular2/core';
         border-radius: 4px 0px 0px 4px;
       }
     `],
+    directives: [HeroDetailComponent],
+    providers: [HeroService],
     template: `
                 <h1>{{title}}</h1>
                 <h2>My Heroes</h2>
                 <ul class="heroes">
-                  <li *ngFor="#hero of heroes">
+                  <li
+                  *ngFor="#hero of heroes"
+                  (click)="onSelect(hero)"
+                  [class.selected]="hero === selectedHero">
                     <span class="badge">{{hero.id}}</span> {{hero.name}}
                   </li>
                 </ul>
-                <h2>{{hero.name}} details!</h2>
-                <div><label>id: </label>{{hero.id}}</div>
-                <div>
-                <label>name: </label>
-                <div><input [(ngModel)]="hero.name" placeholder="name"></div>
-                </div>
+                <my-hero-detail [hero]="selectedHero"></my-hero-detail>
               `
 })
 
-export class AppComponent {
-    public title = 'Tour of Heroes';
 
-    // note we don't need to define Hero type;
-    // it is inferred from HEROES definition
-    public heroes = HEROES;
-    public  hero: Hero = {
-        id: 1,
-        name: 'Windstorm'
+
+export class AppComponent implements OnInit{
+
+    public title = 'Tour of Heroes';
+    public heroes: Hero[];
+    public selectedHero: Hero;
+
+    constructor(
+        private _heroService: HeroService
+    ) { }
+
+    // use this guy to do any heavy lifting on init (NOT constructor) avoid critical errors.
+    // e.g. if web service call throws err in contr, then app completely fails to init,
+    // rather than fail gracefully, or attempt to recover
+    ngOnInit():any {
+        this.getHeroes();
+    }
+
+    onSelect(hero: Hero){
+        this.selectedHero = hero;
+    }
+
+    getHeroes(){
+        // arrow is more succinct than equivalent function expression, and gracefully handles _this_
+        this._heroService.getHeroes().then(heroes => this.heroes = heroes);
     }
 }
 
-interface Hero {
-    id: number;
-    name: string;
-}
 
-
-
-
-
-var HEROES: Hero[] = [
-    { "id": 11, "name": "Mr. Nice" },
-    { "id": 12, "name": "Narco" },
-    { "id": 13, "name": "Bombasto" },
-    { "id": 14, "name": "Celeritas" },
-    { "id": 15, "name": "Magneta" },
-    { "id": 16, "name": "RubberMan" },
-    { "id": 17, "name": "Dynama" },
-    { "id": 18, "name": "Dr IQ" },
-    { "id": 19, "name": "Magma" },
-    { "id": 20, "name": "Tornado" }
-];
